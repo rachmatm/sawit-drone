@@ -1,0 +1,12 @@
+// This file contains the repository implementation layer.
+package repository
+
+import "database/sql"
+
+type PostgresRepository struct{ db *sql.DB }
+
+func NewPostgresRepository(db *sql.DB) *PostgresRepository {
+	return &PostgresRepository{
+		db: db,
+	}
+}
