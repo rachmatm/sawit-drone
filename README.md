@@ -102,7 +102,9 @@ Request validation (required fields, value ranges) is handled by `oapi-codegen/e
 The drone surveys every plot in a snake pattern — odd rows left to right, even rows right to left. Height adjusts to `treeHeight + 1` at each plot. When `max-distance` is set, the drone lands at the nearest plot before exceeding the limit.
  
 ### 7. Multi-stage Docker Build
-Builder stage compiles the binary with `golang:1.21-alpine`, production stage runs it with `alpine:latest` for a minimal image size.
+Builder stage compiles the binary with `golang:1.25-alpine` — bumped from 1.21 to support
+Air hot-reload during local development (`air` requires Go 1.22+). Production stage runs
+with `alpine:latest` for a minimal image size with no Go toolchain included.
  
 ---
  
@@ -116,3 +118,16 @@ Builder stage compiles the binary with `golang:1.21-alpine`, production stage ru
 | `github.com/google/uuid` | UUID generation for IDs |
 | `github.com/lib/pq` | PostgreSQL driver |
 | `github.com/stretchr/testify` | Test assertions |
+
+
+## Go Version
+
+The project was developed using **Go 1.21** as specified in `go.mod`, however the
+Dockerfile uses `golang:1.25-alpine` to enable hot-reload support via
+[Air](https://github.com/air-verse/air) during local development.
+
+Air requires Go 1.22+ to install properly. Bumping the Docker base image to 1.25
+was the minimal change needed to get `go install github.com/air-verse/air@latest`
+working inside the container without touching the module itself.
+
+The production binary is still compiled and compatible with Go 1.21.
