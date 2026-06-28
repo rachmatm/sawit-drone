@@ -1,0 +1,379 @@
+# This is the OpenAPI specification for your service. It is used to generate the client code.
+# To generate the server code, use the Gradle task `openApiGenerate`. The 
+# generated code will be placed in `build/generate-resources/main`.
+#
+# We will evaluate you based on how well you design your API.
+# 1. How well it follows REST principles.
+# 2. How easy it is to understand and use.
+#
+# References
+# 1. https://swagger.io/specification/
+openapi: "3.0.0"
+
+info:
+  version: 1.0.0
+  title: Estate Service
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost
+
+paths:
+  /hello:
+    get:
+      summary: This is just a test endpoint to get you started.
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Test return
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/HelloResponse"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /estate:
+    post:
+      summary: Create an estate
+      description: >
+        Creates an estate.
+
+        Width and length represent the number of 10m x 10m plots.
+
+        For example:
+        - width=5 and length=10 represents 50 plots.
+        - width and length must be between 1 and 50000 inclusive.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEstateRequest"
+      responses:
+        '200':
+          description: Estate created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateEstateResponse"
+
+        '400':
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /estate/{estateId}/tree:
+    post:
+      summary: Add a tree to an estate
+
+      parameters:
+        - name: estateId
+          in: path
+          required: true
+          description: Estate UUIDv4 identifier
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTreeRequest"
+
+      responses:
+        '200':
+          description: Tree created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateTreeResponse"
+
+        '404':
+          description: Estate not found or invalid estate identifier
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        '400':
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"                
+
+  /estate/{estateId}/stats:
+    get:
+      summary: Get estate statistics
+      parameters:
+        - name: estateId
+          in: path
+          required: true
+          description: Estate UUIDv4 identifier
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
+
+      responses:
+        '200':
+          description: Estate statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EstateStatsResponse"
+
+        '404':
+          description: Estate not found or invalid estate identifier
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /estate/{estateId}/drone-plan:
+    get:
+      summary: Get drone flight plan
+      description: >
+        Calculates the drone route distance.
+
+        When max-distance is provided, the response includes
+        a "rest" field containing the x,y coordinate where
+        the drone first lands after exhausting its main battery.
+
+        x represents the West-East position.
+
+        y represents the South-North position.
+
+        If max-distance exceeds the total route distance,
+        the coordinate returned is the final point reached
+        by the drone.
+      parameters:
+        - name: estateId
+          in: path
+          required: true
+          description: Estate UUIDv4 identifier
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
+
+        - name: max-distance
+          in: query
+          required: false
+          description: >
+            Positive integer indicating the maximum sum of
+            vertical and horizontal distance, in meters,
+            that the drone can travel with its main battery.
+          schema:
+            type: integer
+            minimum: 1
+            example: 100
+
+      responses:
+        '200':
+          description: Drone plan generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DronePlanResponse"
+
+        '404':
+          description: Estate not found or invalid estate identifier
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+
+
+
+components:
+  schemas:
+    HelloResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: Hello, World!
+
+    ErrorResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: Estate not found
+
+    CreateEstateRequest:
+      type: object
+      required:
+        - length
+        - width
+      properties:
+        length:
+          type: integer
+          minimum: 1
+          maximum: 50000
+          description: >
+            For example, the width of 5 and length of 10 represents 50 10x10m2 plots. 
+            The integers must be from 1 to 50000.
+          example: 10
+
+        width:
+          type: integer
+          minimum: 1
+          maximum: 50000
+          description: >
+            For example, the width of 5 and length of 10 represents 50 10x10m2 plots. 
+            The integers must be from 1 to 50000.
+          example: 5
+
+    CreateTreeRequest:
+      type: object
+      required:
+        - x
+        - y
+        - height
+      properties:
+        x:
+          type: integer
+          minimum: 1
+          maximum: 50000
+          description: The x and y represent the plot location on the West-East and South-North axis respectively.
+          example: 10
+
+        y:
+          type: integer
+          minimum: 1
+          maximum: 50000
+          description: The x and y represent the plot location on the West-East and South-North axis respectively.
+          example: 10
+
+        height:
+          type: integer
+          minimum: 1
+          maximum: 30
+          description: Tree height in meters.
+          example: 30
+
+    CreateEstateResponse:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+    CreateTreeResponse:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+    EstateStatsResponse:
+      type: object
+      required:
+        - count
+        - max
+        - min
+        - median
+      properties:
+        count:
+          type: integer
+          description: Number of trees in the estate.
+          example: 0
+
+        max:
+          type: integer
+          description: Maximum tree height in meters.
+          example: 0
+
+        min:
+          type: integer
+          description: Minimum tree height in meters.
+          example: 0
+
+        median:
+          type: integer
+          description: Median tree height in meters.
+          example: 0
+
+    DronePlanResponse:
+      type: object
+      required:
+        - distance
+      properties:
+        distance:
+          type: integer
+          description: Total drone travel distance in meters.
+          example: 200
+
+        rest:
+          nullable: true
+          description: >
+            Returned only when the max-distance query parameter
+            is supplied.
+
+            Contains the coordinate where the drone first lands
+            after reaching the maximum travel distance of its
+            main battery.
+
+            If max-distance exceeds the total route distance,
+            contains the final coordinate reached by the drone.
+          allOf:
+            - $ref: "#/components/schemas/LandingPoint"
+
+    LandingPoint:
+      type: object
+      required:
+        - x
+        - y
+      description: >
+        The coordinate where the drone first lands after
+        reaching the maximum travel distance allowed by
+        its main battery.
+
+        If max-distance exceeds the total route distance,
+        this coordinate represents the final point reached
+        by the drone.
+
+        x represents the position on the West-East axis.
+
+        y represents the position on the South-North axis.
+      properties:
+        x:
+          type: integer
+          minimum: 0
+          example: 10
+          description: Position on the West-East axis.
+
+        y:
+          type: integer
+          minimum: 0
+          example: 1
+          description: Position on the South-North axis.
