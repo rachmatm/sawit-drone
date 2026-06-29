@@ -1,4 +1,4 @@
-# Backend Engineering Interview Assignment (Golang)
+# (Golang) Backend service for estate tree mapping and optimal drone survey path planning. 
 
 Submitted by **Rachmat Maulana Saleh**
 
